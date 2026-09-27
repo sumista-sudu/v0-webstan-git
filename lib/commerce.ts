@@ -1,5 +1,6 @@
 import { list, get, put } from '@vercel/blob'
-import { createSign, createVerify, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
+import { MyPOSClient } from 'mypos-online-checkout'
 import { resources } from '@/lib/resources'
 
 export type Resource = (typeof resources)[number]
@@ -134,42 +135,25 @@ function orderedValues(fields: Record<string, string>) {
   return Object.entries(fields).map(([, value]) => String(value))
 }
 
-export function signMyPos(fields: Record<string, string>) {
+export function getMyPosClient() {
   const privateKey = requiredEnv('MYPOS_PRIVATE_KEY').replace(/\\n/g, '\\n')
-  const payload = Buffer.from(orderedValues(fields).join('-')).toString('base64')
-  const signer = createSign('RSA-SHA256')
-  signer.update(payload)
-  signer.end()
-  return signer.sign(privateKey).toString('base64')
+  const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\\n')
+  return new MyPOSClient({
+    storeId: requiredEnv('MYPOS_STORE_ID'),
+    storePassword: requiredEnv('MYPOS_STORE_PASSWORD'),
+    keyIndex: Number(requiredEnv('MYPOS_KEY_INDEX')),
+    privateKey,
+    publicKey,
+    isSandbox: env('MYPOS_SANDBOX', 'true').toLowerCase() === 'true',
+  })
 }
 
-export function verifyMyPos(fields: Array<[string, string]>) {
-  const signatureIndex = fields.findIndex(([key]) => key === 'Signature')
-  if (signatureIndex < 0) return false
-  const signature = fields[signatureIndex][1]
-  const values = fields.filter(([key]) => key !== 'Signature').map(([, value]) => value)
-  const payload = Buffer.from(values.join('-')).toString('base64')
-  const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\\n')
-  const verifier = createVerify('RSA-SHA256')
-  verifier.update(payload)
-  verifier.end()
-  try {
-    return verifier.verify(publicKey, Buffer.from(signature, 'base64'))
-  } catch {
-    return false
-  }
+export function getMyPosEndpoint() {
+  return getMyPosClient().checkoutUrl
 }
 
 export function newOrderId() {
   return randomUUID().replace(/-/g, '')
-}
-
-export function getMyPosEndpoint() {
-  const explicit = env('MYPOS_CHECKOUT_URL')
-  if (explicit) return explicit
-  return env('MYPOS_SANDBOX', 'true').toLowerCase() === 'true'
-    ? 'https://www.mypos.com/vmp/checkout-test'
-    : 'https://www.mypos.com/vmp/checkout'
 }
 
 export function requiredSeller(name: string, fallback: string) {
