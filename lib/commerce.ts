@@ -34,7 +34,7 @@ function requiredEnv(name: string) {
 }
 
 export function getSiteUrl() {
-  return env('NEXT_PUBLIC_SITE_URL', 'https://v0-webstan.vercel.app').replace(/\\/$/, '')
+  return env('NEXT_PUBLIC_SITE_URL', 'https://v0-webstan.vercel.app').replace(/\/$/, '')
 }
 
 export function getCurrency() {
@@ -79,7 +79,7 @@ function normalize(value: string) {
 export async function findProductBlob(resource: Resource) {
   const aliases = resource.assetAliases.map(normalize)
   const { blobs } = await list({ limit: 1000 })
-  const pdfs = blobs.filter((blob) => /\\.pdf$/i.test(blob.pathname))
+  const pdfs = blobs.filter((blob) => /\.pdf$/i.test(blob.pathname))
 
   let best: { score: number; pathname: string } | null = null
   for (const blob of pdfs) {
@@ -136,7 +136,7 @@ function orderedValues(fields: Record<string, string>) {
 }
 
 export function getMyPosClient() {
-  const privateKey = requiredEnv('MYPOS_PRIVATE_KEY').replace(/\\n/g, '\\n')
+  const privateKey = requiredEnv('MYPOS_PRIVATE_KEY').replace(/\\n/g, '\n')
   const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\\n')
   return new MyPOSClient({
     storeId: requiredEnv('MYPOS_STORE_ID'),
@@ -160,5 +160,5 @@ export function requiredSeller(name: string, fallback: string) {
 }
 
 export function pdfEscape(value: string) {
-  return transliterate(value).replace(/\\/g, '\\\\').replace(/\\(/g, '\\\\(').replace(/\\)/g, '\\\\)')
+  return transliterate(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
 }
