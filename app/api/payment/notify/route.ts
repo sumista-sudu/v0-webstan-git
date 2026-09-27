@@ -16,7 +16,8 @@ export async function POST(request: Request) {
       return new Response('Invalid payment notification', { status: 400 })
     }
 
-    const { orderId, amount, currency, transactionRef } = result.data
+    const { orderId, amount, currency } = result.data
+    const transactionRef = params.IPC_Trnref
     if (!orderId || amount == null || !currency) return new Response('Missing payment fields', { status: 400 })
 
     const order = await readOrder(orderId)
