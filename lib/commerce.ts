@@ -61,7 +61,7 @@ function transliterate(value: string) {
   }
   return value
     .normalize('NFD')
-    .replace(/\\p{Diacritic}/gu, '')
+    .replace(/\p{Diacritic}/gu, '')
     .split('')
     .map((c) => map[c.toLowerCase()] ? (c === c.toUpperCase() ? map[c.toLowerCase()].toUpperCase() : map[c.toLowerCase()]) : c)
     .join('')
@@ -72,7 +72,7 @@ function normalize(value: string) {
     .toLowerCase()
     .replace(/[_-]+/g, ' ')
     .replace(/[^a-z0-9 ]+/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
@@ -126,7 +126,7 @@ export async function readPrivatePdf(pathname: string) {
 }
 
 export function splitCustomerName(fullName: string) {
-  const parts = fullName.trim().split(/\\s+/).filter(Boolean)
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
   if (parts.length === 1) return { firstNames: parts[0], familyName: parts[0] }
   return { firstNames: parts.slice(0, -1).join(' '), familyName: parts[parts.length - 1] }
 }
