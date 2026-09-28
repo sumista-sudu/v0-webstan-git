@@ -25,7 +25,7 @@ export function getLegalConfig(): LegalConfig {
     vatId: env('SELLER_VAT_ID'),
     country: env('SELLER_COUNTRY', 'България'),
     priceTaxNote: env('PRICE_TAX_NOTE'),
-    deliveryPolicy: env('DIGITAL_DELIVERY_POLICY', 'След потвърдено плащане дигиталният продукт се доставя по имейл; за PayButton плащанията доставката се извършва след потвърждение в myPOS.'),
+    deliveryPolicy: env('DIGITAL_DELIVERY_POLICY', 'При API Checkout дигиталният PDF се изпраща по имейл след server-side потвърждение от myPOS. При фиксирания PayButton за AI-Bug-Bounty-Playbook доставката се извършва след потвърждение на плащането в myPOS и не по-късно от 24 часа.'),
     policyVersion: env('LEGAL_POLICY_VERSION', '2026-09-28'),
   }
 }
