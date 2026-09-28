@@ -137,9 +137,10 @@ function orderedValues(fields: Record<string, string>) {
 
 export function getMyPosClient() {
   const privateKey = requiredEnv('MYPOS_PRIVATE_KEY').replace(/\\n/g, '\n')
-  const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\\n')
+  const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\n')
   return new MyPOSClient({
     storeId: requiredEnv('MYPOS_STORE_ID'),
+    storePassword: requiredEnv('MYPOS_STORE_PASSWORD'),
     keyIndex: Number(requiredEnv('MYPOS_KEY_INDEX')),
     privateKey,
     publicKey,
