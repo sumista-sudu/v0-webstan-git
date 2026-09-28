@@ -24,10 +24,11 @@ export async function sendOrderEmail(order: Order, productBuffer: Buffer, invoic
       html: [
         '<p>Здравейте, ' + safeName + '.</p>',
         '<p>Плащането е потвърдено от myPOS. Този имейл е потвърждение на покупката на траен носител.</p>',
-        '<p><strong>Продукт:</strong> ' + order.title + '<br><strong>Сума:</strong> ' + order.amount + ' ' + order.currency + '<br><strong>Поръчка:</strong> ' + order.id + '</p>',
+        '<p><strong>Продукт:</strong> ' + order.title + '<br><strong>Количество:</strong> 1<br><strong>Обща цена:</strong> ' + order.amount + ' ' + order.currency + '<br><strong>Поръчка:</strong> ' + order.id + '</p>',
+        '<p><strong>Доставка:</strong> PDF по имейл след потвърдено плащане. <strong>Формат:</strong> PDF текстов документ; стандартен PDF четец е достатъчен.</p>',
         '<p>Приложени са дигиталният продукт PDF и документът за покупката.</p>',
         '<p>Вашето изрично съгласие за започване на дигиталната доставка е записано на: ' + new Date(order.digitalContentConsentAt).toISOString() + '.</p>',
-        '<p>Условия: <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#terms">Общи условия</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#withdrawal">Отказ</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#privacy">Поверителност</a>.</p>',
+        '<p>Условия: <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#terms">Общи условия</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#withdrawal">Отказ</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#privacy">Поверителност</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal/withdrawal-form">Формуляр за отказ</a>.</p>',
         '<p>Поздрави,<br>' + legal.sellerName + '</p>',
       ].join(''),
       attachments: [
