@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { findProductBlob, newOrderId, saveOrder, splitCustomerName } from '@/lib/commerce'
+import { findProductBlob, newOrderId, saveOrder } from '@/lib/commerce'
 import { assertLegalReady } from '@/lib/legal'
+import { resources } from '@/lib/resources'
 
 export const runtime = 'nodejs'
 
@@ -11,7 +12,7 @@ export async function POST(request: Request) {
     const email = String(body.email ?? '').trim().toLowerCase()
     const customerName = String(body.customerName ?? '').trim()
     const termsAccepted = Boolean(body.termsAccepted)
-    const digitalConsent = Boolean(body.digitalConsent)
+    const digitalContentConsent = Boolean(body.digitalContentConsent)
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Моля, въведете валиден имейл.' }, { status: 400 })
@@ -19,25 +20,21 @@ export async function POST(request: Request) {
     if (customerName.length < 2) {
       return NextResponse.json({ error: 'Моля, въведете име.' }, { status: 400 })
     }
-    if (!termsAccepted || !digitalConsent) {
+    if (!termsAccepted || !digitalContentConsent) {
       return NextResponse.json({ error: 'Необходимо е да приемете условията и да дадете изричното съгласие за дигитална доставка.' }, { status: 400 })
     }
 
-    const resource = 'ai-bug-bounty-playbook'
-    const productPath = await findProductBlob({
-      slug: resource,
-      assetAliases: ['AI-Bug-Bounty-Playbook', 'ai-bug-bounty-playbook'],
-    } as any)
+    const product = resources.find((item) => item.slug === 'ai-bug-bounty-playbook')
+    if (!product) return NextResponse.json({ error: 'Продуктът не е конфигуриран.' }, { status: 500 })
 
     const id = newOrderId()
-    const { firstNames, familyName } = splitCustomerName(customerName)
-    void firstNames
-    void familyName
+    const consentAt = new Date().toISOString()
+    const productPath = await findProductBlob(product)
 
     await saveOrder({
       id,
-      slug: resource,
-      title: 'AI-BUG-BOUNTY-PLAYBOOK',
+      slug: product.slug,
+      title: product.title,
       email,
       customerName,
       amount: '149.00',
@@ -45,11 +42,11 @@ export async function POST(request: Request) {
       productPath,
       paymentMethod: 'MYPOS_PAYBUTTON',
       status: 'PENDING',
-      createdAt: new Date().toISOString(),
+      createdAt: consentAt,
       invoiceNumber: 'INV-' + id,
-      termsAcceptedAt: new Date().toISOString(),
-      digitalContentConsentAt: new Date().toISOString(),
-      consentVersion: '2026-09-28',
+      termsAcceptedAt: consentAt,
+      digitalContentConsentAt: consentAt,
+      consentVersion: process.env.LEGAL_POLICY_VERSION?.trim() || '2026-09-28',
     })
 
     return NextResponse.json({ ok: true })
