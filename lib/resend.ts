@@ -1,9 +1,13 @@
 import type { Order } from '@/lib/commerce'
+import { getLegalConfig } from '@/lib/legal'
 
 export async function sendOrderEmail(order: Order, productBuffer: Buffer, invoiceBuffer: Buffer) {
   const apiKey = process.env.RESEND_API_KEY?.trim()
   const from = process.env.RESEND_FROM_EMAIL?.trim()
   if (!apiKey || !from) throw new Error('Missing RESEND_API_KEY or RESEND_FROM_EMAIL')
+
+  const legal = getLegalConfig()
+  const safeName = order.customerName.replace(/[<>]/g, '')
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -15,13 +19,16 @@ export async function sendOrderEmail(order: Order, productBuffer: Buffer, invoic
     body: JSON.stringify({
       from,
       to: [order.email],
-      reply_to: ['ilievstanislav5@gmail.com'],
+      reply_to: [legal.email],
       subject: 'Поръчката ти е потвърдена — ' + order.title,
       html: [
-        '<p>Здравейте, ' + order.customerName.replace(/[<>]/g, '') + '.</p>',
-        '<p>Плащането е потвърдено и дигиталният продукт е приложен към този имейл.</p>',
-        '<p>Приложени са: продуктът PDF и документът за фактура.</p>',
-        '<p>Поздрави,<br>Stanislav Iliev</p>',
+        '<p>Здравейте, ' + safeName + '.</p>',
+        '<p>Плащането е потвърдено от myPOS. Този имейл е потвърждение на покупката на траен носител.</p>',
+        '<p><strong>Продукт:</strong> ' + order.title + '<br><strong>Сума:</strong> ' + order.amount + ' ' + order.currency + '<br><strong>Поръчка:</strong> ' + order.id + '</p>',
+        '<p>Приложени са дигиталният продукт PDF и документът за покупката.</p>',
+        '<p>Вашето изрично съгласие за започване на дигиталната доставка е записано на: ' + new Date(order.digitalContentConsentAt).toISOString() + '.</p>',
+        '<p>Условия: <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#terms">Общи условия</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#withdrawal">Отказ</a> · <a href="' + (process.env.NEXT_PUBLIC_SITE_URL || 'https://v0-webstan.vercel.app') + '/legal#privacy">Поверителност</a>.</p>',
+        '<p>Поздрави,<br>' + legal.sellerName + '</p>',
       ].join(''),
       attachments: [
         { filename: order.slug + '.pdf', content: productBuffer.toString('base64') },
