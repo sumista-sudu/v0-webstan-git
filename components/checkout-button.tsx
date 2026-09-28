@@ -6,18 +6,25 @@ import { ArrowRight, Loader2 } from 'lucide-react'
 export function CheckoutButton({ slug, amount, currency }: { slug: string; amount: string | null; currency: string }) {
   const [email, setEmail] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [digitalContentConsent, setDigitalContentConsent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setLoading(true)
     setError('')
+    if (!termsAccepted || !digitalContentConsent) {
+      setError('Моля, потвърдете Общите условия и изричното съгласие за незабавна дигитална доставка.')
+      return
+    }
+
+    setLoading(true)
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug, email, customerName }),
+        body: JSON.stringify({ slug, email, customerName, termsAccepted, digitalContentConsent }),
       })
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Неуспешно стартиране на плащането.')
@@ -48,12 +55,24 @@ export function CheckoutButton({ slug, amount, currency }: { slug: string; amoun
 
   return <form className="checkout-form" onSubmit={submit}>
     <div className="checkout-fields">
-      <label><span>ИМЕ</span><input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Вашето име" required /></label>
-      <label><span>ИМЕЙЛ</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></label>
+      <label><span>ИМЕ</span><input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Вашето име" autoComplete="name" required /></label>
+      <label><span>ИМЕЙЛ</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required /></label>
     </div>
-    {error && <p className="checkout-error">{error}</p>}
+    <div className="consent-box">
+      <label className="consent-row">
+        <input type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} required />
+        <span>Приемам <a href="/legal#terms" target="_blank" rel="noopener noreferrer">Общите условия</a> и съм запознат/а с крайната цена, начина и срока на доставка.</span>
+      </label>
+      <label className="consent-row">
+        <input type="checkbox" checked={digitalContentConsent} onChange={(e) => setDigitalContentConsent(e.target.checked)} required />
+        <span>Изрично искам дигиталното съдържание да бъде доставено веднага след потвърждение на плащането и разбирам, че след започване на доставката губя правото на отказ, когато законовите условия за това са изпълнени.</span>
+      </label>
+      <p>Личните данни се обработват за изпълнение на покупката и свързаните законови задължения. <a href="/legal#privacy" target="_blank" rel="noopener noreferrer">Политика за поверителност</a>.</p>
+    </div>
+    {error && <p className="checkout-error" role="alert">{error}</p>}
     <button className="button primary checkout-submit" type="submit" disabled={loading}>
       {loading ? <><Loader2 className="spin" /> Прехвърляне към myPOS...</> : <>Плати {amount} {currency} <ArrowRight /></>}
     </button>
+    <small className="checkout-note">Плащането се извършва на защитената страница на myPOS.</small>
   </form>
 }
