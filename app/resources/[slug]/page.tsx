@@ -16,7 +16,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ slug:
   const legal = getLegalConfig()
   const isPayButton = resource.slug === 'ai-bug-bounty-playbook'
 
-  return <main className="site-shell detail-page">
+  return <main id="main-content" className="site-shell detail-page">
     <header className="topbar">
       <Link href="/" className="brand"><span>STANISLAV ILIEV</span><strong>WORKFLOWS <i>&amp;</i> AUTOMATIONS</strong></Link>
       <Link href="/" className="back-link"><ArrowLeft /> Back to resources</Link>
