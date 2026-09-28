@@ -14,12 +14,16 @@ export type Order = {
   amount: string
   currency: string
   productPath: string
+  paymentMethod: 'MYPOS_CHECKOUT' | 'MYPOS_PAYBUTTON'
   status: 'PENDING' | 'PAID' | 'DELIVERY_FAILED'
   createdAt: string
   paidAt?: string
   deliverySentAt?: string
   invoiceNumber: string
   transactionRef?: string
+  termsAcceptedAt: string
+  digitalContentConsentAt: string
+  consentVersion: string
 }
 
 function env(name: string, fallback?: string) {
@@ -83,7 +87,7 @@ export async function findProductBlob(resource: Resource) {
 
   let best: { score: number; pathname: string } | null = null
   for (const blob of pdfs) {
-    const name = normalize(blob.pathname.replace(/\\.pdf$/i, ''))
+    const name = normalize(blob.pathname.replace(/\.pdf$/i, ''))
     let score = 0
     for (const alias of aliases) {
       if (!alias) continue
@@ -131,17 +135,15 @@ export function splitCustomerName(fullName: string) {
   return { firstNames: parts.slice(0, -1).join(' '), familyName: parts[parts.length - 1] }
 }
 
-function orderedValues(fields: Record<string, string>) {
-  return Object.entries(fields).map(([, value]) => String(value))
-}
-
 export function getMyPosClient() {
   const privateKey = requiredEnv('MYPOS_PRIVATE_KEY').replace(/\\n/g, '\n')
   const publicKey = requiredEnv('MYPOS_PUBLIC_KEY').replace(/\\n/g, '\n')
+  const keyIndex = Number(requiredEnv('MYPOS_KEY_INDEX'))
+  if (!Number.isInteger(keyIndex) || keyIndex < 0) throw new Error('Invalid MYPOS_KEY_INDEX')
   return new MyPOSClient({
     storeId: requiredEnv('MYPOS_STORE_ID'),
     storePassword: requiredEnv('MYPOS_STORE_PASSWORD'),
-    keyIndex: Number(requiredEnv('MYPOS_KEY_INDEX')),
+    keyIndex,
     privateKey,
     publicKey,
     isSandbox: env('MYPOS_SANDBOX', 'true').toLowerCase() === 'true',
