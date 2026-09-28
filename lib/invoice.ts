@@ -1,10 +1,11 @@
 import { pdfEscape, requiredSeller } from '@/lib/commerce'
+import { getLegalConfig } from '@/lib/legal'
 import type { Order } from '@/lib/commerce'
 
 function buildPdf(lines: string[]) {
   const content = lines.map((line, i) => {
     const font = i === 0 ? '18' : i === 1 ? '12' : '10'
-    const y = i === 0 ? 790 : 760 - (i - 2) * 24
+    const y = 790 - Math.max(0, i - 2) * 24
     return 'BT /F1 ' + font + ' Tf 50 ' + y + ' Td (' + pdfEscape(line) + ') Tj ET'
   }).join('\\n')
 
@@ -31,28 +32,31 @@ function buildPdf(lines: string[]) {
 }
 
 export function makeInvoicePdf(order: Order) {
-  const sellerName = requiredSeller('SELLER_NAME', 'Stanislav Iliev')
-  const sellerEmail = requiredSeller('SELLER_EMAIL', 'ilievstanislav5@gmail.com')
-  const sellerPhone = requiredSeller('SELLER_PHONE', '+359 877 665 447')
-  const sellerAddress = requiredSeller('SELLER_ADDRESS', '')
-  const sellerUic = requiredSeller('SELLER_UIC', '')
-  const sellerVat = requiredSeller('SELLER_VAT_ID', '')
+  const legal = getLegalConfig()
+  const sellerName = requiredSeller('SELLER_NAME', legal.sellerName)
+  const sellerEmail = requiredSeller('SELLER_EMAIL', legal.email)
+  const sellerPhone = requiredSeller('SELLER_PHONE', legal.phone)
+  const sellerAddress = requiredSeller('SELLER_ADDRESS', legal.address)
+  const sellerUic = requiredSeller('SELLER_UIC', legal.registrationNumber)
+  const sellerVat = requiredSeller('SELLER_VAT_ID', legal.vatId)
 
   const date = new Date(order.paidAt ?? order.createdAt).toISOString().slice(0, 10)
   const lines = [
-    'INVOICE',
+    'INVOICE / SALES DOCUMENT',
     order.invoiceNumber,
     'Date: ' + date,
     'Seller: ' + sellerName,
+    'Address: ' + (sellerAddress || 'NOT CONFIGURED'),
     'Email: ' + sellerEmail,
     'Phone: ' + sellerPhone,
-    ...(sellerAddress ? ['Address: ' + sellerAddress] : []),
-    ...(sellerUic ? ['UIC: ' + sellerUic] : []),
+    ...(sellerUic ? ['UIC / Reg. no.: ' + sellerUic] : []),
     ...(sellerVat ? ['VAT ID: ' + sellerVat] : []),
     'Customer: ' + order.customerName,
     'Customer email: ' + order.email,
     'Product: ' + order.title,
     'Amount: ' + order.amount + ' ' + order.currency,
+    'Tax information: ' + (legal.priceTaxNote || 'See applicable tax treatment.'),
+    'Payment: ' + order.paymentMethod,
     'Status: PAID',
   ]
   return buildPdf(lines)
