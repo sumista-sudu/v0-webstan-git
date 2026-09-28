@@ -4,6 +4,12 @@ import { MyPOSClient } from 'mypos-online-checkout'
 import { resources } from '@/lib/resources'
 
 export type Resource = (typeof resources)[number]
+export type BillingDetails = {
+  companyName: string
+  uic: string
+  vatId: string
+  address: string
+}
 
 export type Order = {
   id: string
@@ -11,6 +17,7 @@ export type Order = {
   title: string
   email: string
   customerName: string
+  billing?: BillingDetails
   amount: string
   currency: string
   productPath: string
@@ -84,8 +91,8 @@ export async function findProductBlob(resource: Resource) {
   const aliases = resource.assetAliases.map(normalize)
   const { blobs } = await list({ limit: 1000 })
   const pdfs = blobs.filter((blob) => /\.pdf$/i.test(blob.pathname))
-
   let best: { score: number; pathname: string } | null = null
+
   for (const blob of pdfs) {
     const name = normalize(blob.pathname.replace(/\.pdf$/i, ''))
     let score = 0
@@ -102,9 +109,7 @@ export async function findProductBlob(resource: Resource) {
     if (!best || score > best.score) best = { score, pathname: blob.pathname }
   }
 
-  if (!best || best.score < 30) {
-    throw new Error('Product PDF not found in the connected private Blob store')
-  }
+  if (!best || best.score < 30) throw new Error('Product PDF not found in the connected private Blob store')
   return best.pathname
 }
 
