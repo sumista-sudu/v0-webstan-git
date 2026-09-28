@@ -12,7 +12,7 @@ const nodes = [
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false)
   return (
-    <main className="site-shell">
+    <main id="main-content" className="site-shell">
       <header className="topbar">
         <Link href="#top" className="brand" onClick={() => setMenuOpen(false)}><span>STANISLAV ILIEV</span><strong>WORKFLOWS <i>&amp;</i> AUTOMATIONS</strong></Link>
         <button className="menu-toggle" aria-label="Отвори меню" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button>
