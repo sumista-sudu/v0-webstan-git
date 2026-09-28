@@ -14,12 +14,19 @@ export async function POST(request: Request) {
     const customerName = String(body.customerName ?? '').trim()
     const termsAccepted = Boolean(body.termsAccepted)
     const digitalContentConsent = Boolean(body.digitalContentConsent)
+    const billing = body.billing && typeof body.billing === 'object' ? {
+      companyName: String(body.billing.companyName ?? '').trim(),
+      uic: String(body.billing.uic ?? '').trim(),
+      vatId: String(body.billing.vatId ?? '').trim(),
+      address: String(body.billing.address ?? '').trim(),
+    } : undefined
     const resource = resources.find((item) => item.slug === slug)
 
     if (!resource) return NextResponse.json({ error: 'Невалиден продукт.' }, { status: 400 })
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Моля, въведете валиден имейл.' }, { status: 400 })
     if (customerName.length < 2) return NextResponse.json({ error: 'Моля, въведете име.' }, { status: 400 })
     if (!termsAccepted || !digitalContentConsent) return NextResponse.json({ error: 'Необходимо е да приемете Общите условия и да дадете изричното съгласие за дигитална доставка.' }, { status: 400 })
+    if (billing && (!billing.companyName || !billing.uic || !billing.address)) return NextResponse.json({ error: 'Непълни данни за фирмена фактура.' }, { status: 400 })
 
     const amount = getPrice(resource)
     if (!amount) return NextResponse.json({ error: 'Този продукт все още не е конфигуриран за продажба.' }, { status: 503 })
@@ -49,6 +56,7 @@ export async function POST(request: Request) {
       title: resource.title,
       email,
       customerName,
+      ...(billing ? { billing } : {}),
       amount,
       currency,
       productPath,
