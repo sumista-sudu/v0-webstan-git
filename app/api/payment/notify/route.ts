@@ -21,13 +21,13 @@ export async function POST(request: Request) {
     if (!orderId || amount == null || !currency) return new Response('Missing payment fields', { status: 400 })
 
     const order = await readOrder(orderId)
-    if (order.amount !== Number(amount).toFixed(2) || order.currency !== currency) {
-      return new Response('Payment mismatch', { status: 400 })
-    }
+    if (order.paymentMethod !== 'MYPOS_CHECKOUT') return new Response('Unsupported payment route', { status: 400 })
+    if (order.amount !== Number(amount).toFixed(2) || order.currency !== currency) return new Response('Payment mismatch', { status: 400 })
 
     if (order.deliverySentAt) return new Response('OK', { status: 200 })
 
-    const paidOrder = { ...order, status: 'PAID' as const, paidAt: new Date().toISOString(), transactionRef }
+    const paidAt = new Date().toISOString()
+    const paidOrder = { ...order, status: 'PAID' as const, paidAt, transactionRef }
     await saveOrder(paidOrder)
 
     try {
